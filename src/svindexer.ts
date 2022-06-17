@@ -50,6 +50,7 @@ import {
     uriToPath
 } from './genutils';
 
+
 const { fork } = require('child_process');
 const glob = require('glob');
 const path = require('path');
@@ -1095,13 +1096,13 @@ export class SystemVerilogIndexer {
             if (findContainer) {
                 let containerInfo: SystemVerilogParser.SystemVerilogContainerInfo = <SystemVerilogParser.SystemVerilogContainerInfo>(SystemVerilogParser.findSymbol(symbolsInfo, symbolName, true));
                 if (containerInfo.symbol != undefined) {
-                    return [uri, containerInfo.symbol, containerInfo.info];
+                    return [uriToPath(uri), containerInfo.symbol, containerInfo.info];
                 }
             }
             else {
                 let symbol: SystemVerilogSymbol = <SystemVerilogSymbol>(SystemVerilogParser.findSymbol(symbolsInfo, symbolName, false));
                 if (symbol != undefined) {
-                    return [uri, symbol, {}];
+                    return [uriToPath(uri), symbol, {}];
                 }
             }
         }

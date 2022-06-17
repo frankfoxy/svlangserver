@@ -160,7 +160,7 @@ export class SystemVerilogDefinitionProvider {
             let idTokens: GrammarToken[] = svtokens.slice(extTokenNums[0], tokenNum + 1);
             [filePath, symbol] = this._indexer.getHierarchicalSymbol(document.uri, this._indexer.getHierParts(idTokens.map(t => t.text).join(''), idTokens, document.offsetAt(position) - svtokens[extTokenNums[0]].index));
             if (symbol != undefined) {
-                return [filePath, symbol];
+                return [pathToUri(filePath), symbol];
             }
         }
         else if (parentScope == "string.body.systemverilog") {
@@ -227,7 +227,7 @@ export class SystemVerilogDefinitionProvider {
             let argSymbols: SystemVerilogSymbol[] = containerSymbolsInfo.symbolsInfo;
             let filteredArgSymbols: SystemVerilogSymbol[] = argSymbols.filter(sym => { return sym.name == svtokens[tokenNum].text; });
             if (filteredArgSymbols.length > 0) {
-                return [filePath, filteredArgSymbols[0]];
+                return [pathToUri(filePath), filteredArgSymbols[0]];
             }
             return [undefined, undefined];
         }
@@ -248,7 +248,7 @@ export class SystemVerilogDefinitionProvider {
             let containerSymbols: SystemVerilogSymbol[] = containerSymbolsInfo.symbolsInfo;
             let filteredContainerSymbols: SystemVerilogSymbol[] = containerSymbols.filter(sym => { return (sym.name == svtokens[tokenNum].text) && ((sym.type[0] == "port") || (sym.type[0] == "parameter-port")); });
             if (filteredContainerSymbols.length > 0) {
-                return [filePath, filteredContainerSymbols[0]];
+                return [pathToUri(filePath), filteredContainerSymbols[0]];
             }
             return [undefined, undefined];
         }
