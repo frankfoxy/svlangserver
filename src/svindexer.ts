@@ -26,7 +26,8 @@ import {
 } from './svparser';
 
 import {
-    SystemVerilogUtils
+    SystemVerilogUtils,
+    default_settings,
 } from './svutils';
 
 import {
@@ -50,6 +51,7 @@ import {
     uriToPath
 } from './genutils';
 
+let settings: Map<string, any> = default_settings;
 
 const { fork } = require('child_process');
 const glob = require('glob');
@@ -476,6 +478,10 @@ export class SystemVerilogIndexer {
             this._optionsFileContent.push('-v ' + libfile);
         }
         for (let incdir of [...new Set(this._srcFiles.map(file => path.dirname(file))), ...new Set(this._srcFiles.map(file => path.dirname(file)))]) {
+            if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
+                incdir = incdir.replace(/\\/g, "/");
+                incdir = "/mnt/" + incdir.replace(/^([^:]+):/, '$1'.toLowerCase());
+            }
             this._optionsFileContent.push('+incdir+' + incdir);
         }
         fsWriteFile(this.getLinterOptionsFile(), this._optionsFileContent.join('\n'))

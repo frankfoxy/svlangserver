@@ -12,6 +12,7 @@ export let default_settings: Map<string, any> = new Map<string, any>([
         /Parent instance's interface is not found/i
     ]],
     ["systemverilog.formatCommand", "verible-verilog-format"],
+    ["systemverilog.lintingVerilatorUseWSL", false],
     ["systemverilog.disableCompletionProvider", false],
     ["systemverilog.disableHoverProvider", false],
     ["systemverilog.disableSignatureHelpProvider", false],

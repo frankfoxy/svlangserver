@@ -171,6 +171,11 @@
                         "default": "verible-verilog-format",
                         "description": "Verible verilog format command"
                     },
+                    "systemverilog.lintingVerilatorUseWSL": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "If enabled, run verilator in WSL."
+                    },
                     "systemverilog.disableCompletionProvider": {
                         "type": "boolean",
                         "default": false,

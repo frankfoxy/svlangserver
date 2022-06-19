@@ -16,7 +16,14 @@ import {
     tmpFileManager,
 } from "./genutils";
 
+import {
+    default_settings,
+} from "./svutils";
+
+let settings: Map<string, any> = default_settings;
+
 const path = require('path');
+const fs = require('fs');
 
 function getVerilatorSeverity(severityString: string): DiagnosticSeverity {
     let result: DiagnosticSeverity = DiagnosticSeverity.Information;
@@ -42,6 +49,12 @@ function parseVerilatorDiagnostics(stdout: string, stderr: string, file: string,
     // Group 4: Line number
     // Group 5: Column number (optional)
     // Group 6: Message
+
+    if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
+        file = `/mnt/${file.replace(/:/, '')}`;
+        ConnectionLogger.log(`DEBUG: file ${file}`);
+    }
+
     let regex: RegExp = new RegExp(String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: (${file.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}):(\d+):(?:(\d+):)? (.*)`, 'i');
 
     // Parse output lines
@@ -219,7 +232,19 @@ export class VerilogDiagnostics {
             let optionsFileArg: string = optionsFile ? ' -f ' + optionsFile : "";
             let actFileArg: string = this._indexer.isMustSrcFile(file) ? "" : " " + actFile;
             let command: string = this._command + definesArg + optionsFileArg + actFileArg;
-            //ConnectionLogger.log(`DEBUG: verilator command ${command}`);
+
+            if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
+                actFile = actFile.replace(/\\/g, "/");
+                optionsFileArg = fs.existsSync(optionsFile)? ` -f \$(wslpath '${optionsFile.replace(/\\/g, "/")}')` : "";
+                optionsFileArg += ` -y \$(wslpath '${path.dirname(actFile)}')`
+                actFileArg = ` \$(wslpath '${actFile}')`;
+                command = this._command + definesArg + optionsFileArg + actFileArg;
+                if (!command.startsWith("wsl ")) {
+                    command = "wsl " + command;
+                }
+            }
+
+            ConnectionLogger.log(`DEBUG: verilator command ${command}`);
             this._childProcMngr.run(file, command, (status, error, stdout, stderr) => {
                 if (optionsFile != this._optionsFile) {
                     tmpFileManager.returnFreeTmpFileNum("vcfiles", vcTmpFileNum);
