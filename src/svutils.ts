@@ -13,6 +13,7 @@ export let default_settings: Map<string, any> = new Map<string, any>([
     ]],
     ["systemverilog.formatCommand", "verible-verilog-format"],
     ["systemverilog.lintingVerilatorUseWSL", false],
+    ["systemverilog.lintingVerilatorAutoScanDirLevel", 3],
     ["systemverilog.disableCompletionProvider", false],
     ["systemverilog.disableHoverProvider", false],
     ["systemverilog.disableSignatureHelpProvider", false],

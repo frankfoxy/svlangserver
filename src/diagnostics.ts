@@ -25,6 +25,59 @@ let settings: Map<string, any> = default_settings;
 const path = require('path');
 const fs = require('fs');
 
+type GetFileCbFilter = (file: string) => string;
+type GetFileCbDone = (files: Array<string>) => void;
+
+interface GetFileStat {
+    dirPendingNum : number;
+    fileList : Array<string>;
+}
+type GetFileOptions = {
+    levelCur ? : number;
+    levelMax ?: number;
+    filePattern? : RegExp;
+    fileType? : string;
+}
+
+function getFileList(dirPath: string, options:GetFileOptions=null, 
+                     cb_each: GetFileCbFilter=null, cb_done:GetFileCbDone=null, stat:GetFileStat = null):void {
+    let defaultOpitons = { levelCur: 0, levelMax: 1, filePattern: null, fileType: "df" }
+    options = Object.assign({}, defaultOpitons, options);
+
+    //ConnectionLogger.log(`DEBUG: options = ${options}`);
+    if (stat == null) stat = {dirPendingNum: 1, fileList: []};
+
+    if (options.levelCur >= options.levelMax) {
+        stat.dirPendingNum -= 1;
+        if (stat.dirPendingNum == 0 && cb_done) cb_done(stat.fileList);
+        return;
+    }
+    fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+        if (err) files = [];
+        files.forEach(file => {
+            let filepath = path.join(dirPath, file.name);
+
+            if (options.filePattern != null) {
+                if (file.name.match(options.filePattern) == null) return;
+            }
+
+            if (file.isDirectory() && options.levelCur + 1 < options.levelMax) {
+                stat.dirPendingNum += 1;
+                let sub_options = Object.assign({}, options, { levelCur: options.levelCur + 1 })
+                getFileList(filepath, sub_options, cb_each, cb_done, stat);
+            }
+            if (!(options.fileType.includes(file.isDirectory() ? "d" : "f")))
+                return;
+
+            if (cb_each) filepath = cb_each(filepath);
+            if (filepath != null)
+                stat.fileList.push(filepath)
+        });
+        stat.dirPendingNum -= 1;
+        if (stat.dirPendingNum == 0 && cb_done) cb_done(stat.fileList);
+    });
+}
+
 function getVerilatorSeverity(severityString: string): DiagnosticSeverity {
     let result: DiagnosticSeverity = DiagnosticSeverity.Information;
 
@@ -52,7 +105,7 @@ function parseVerilatorDiagnostics(stdout: string, stderr: string, file: string,
 
     if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
         file = `/mnt/${file.replace(/:/, '')}`;
-        ConnectionLogger.log(`DEBUG: file ${file}`);
+        //ConnectionLogger.log(`DEBUG: file ${file}`);
     }
 
     let regex: RegExp = new RegExp(String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: (${file.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}):(\d+):(?:(\d+):)? (.*)`, 'i');
@@ -229,42 +282,54 @@ export class VerilogDiagnostics {
             }
 
             let definesArg: string = this._defines.length > 0 ? this._defines.map(d => ` +define+${d}`).join('') : "";
+            optionsFile = fs.existsSync(optionsFile) ? optionsFile : "";  // check option file exist
             let optionsFileArg: string = optionsFile ? ' -f ' + optionsFile : "";
             let actFileArg: string = this._indexer.isMustSrcFile(file) ? "" : " " + actFile;
-            let command: string = this._command + definesArg + optionsFileArg + actFileArg;
+            //let command: string = this._command + definesArg + optionsFileArg + actFileArg;
 
-            if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
+            let useWSL = settings.get("systemverilog.lintingVerilatorUseWSL");
+            if (useWSL) {
                 actFile = actFile.replace(/\\/g, "/");
-                optionsFileArg = fs.existsSync(optionsFile)? ` -f \$(wslpath '${optionsFile.replace(/\\/g, "/")}')` : "";
-                optionsFileArg += ` -y \$(wslpath '${path.dirname(actFile)}')`
                 actFileArg = ` \$(wslpath '${actFile}')`;
-                command = this._command + definesArg + optionsFileArg + actFileArg;
-                if (!command.startsWith("wsl ")) {
-                    command = "wsl " + command;
-                }
+                optionsFileArg = optionsFile != "" ? ` -f \$(wslpath '${optionsFile.replace(/\\/g, "/")}')` : "";
+                optionsFileArg += ` -y \$(wslpath '${path.dirname(actFile)}')`
             }
 
-            ConnectionLogger.log(`DEBUG: verilator command ${command}`);
-            this._childProcMngr.run(file, command, (status, error, stdout, stderr) => {
-                if (optionsFile != this._optionsFile) {
-                    tmpFileManager.returnFreeTmpFileNum("vcfiles", vcTmpFileNum);
-                }
-                if (status) {
-                    switch (this._linter) {
-                        case "icarus":
+            // auto construct 2 level dir for verilator
+            getFileList(path.dirname(actFile), {
+                levelMax: settings.get("systemverilog.lintingVerilatorAutoScanDirLevel"), 
+                fileType: "d", filePattern: /^[^.].*/
+            }, f => { 
+                // filter each file
+                if (path.basename(f).startsWith(".")) return null;
+                return useWSL ? ` -y \$(wslpath '${f}')` : ` -y '${f}'`;
+            }, files => {
+                // process all files
+                let command: string = this._command + definesArg + optionsFileArg + files.join("") + actFileArg;
+                if (useWSL && !command.startsWith("wsl ")) command = "wsl " + command;
+
+                ConnectionLogger.log(`DEBUG: verilator command ${command}`);
+                this._childProcMngr.run(file, command, (status, error, stdout, stderr) => {
+                    if (optionsFile != this._optionsFile) {
+                        tmpFileManager.returnFreeTmpFileNum("vcfiles", vcTmpFileNum);
+                    }
+                    if (status) {
+                        switch (this._linter) {
+                            case "icarus":
                             resolve(parseIcarusDiagnostics(stdout, stderr, actFile, this._whitelistedMessages));
                             break;
-                        case "verilator":
+                            case "verilator":
                             resolve(parseVerilatorDiagnostics(stdout, stderr, actFile, this._whitelistedMessages));
                             break;
-                        default:
-                            reject(new Error(`Unknown linter ${this._linter}`));
+                            default:
+                                reject(new Error(`Unknown linter ${this._linter}`));
                             break;
+                        }
                     }
-                }
-                else {
-                    resolve([]);
-                }
+                    else {
+                        resolve([]);
+                    }
+                });
             });
         });
     }

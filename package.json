@@ -176,6 +176,11 @@
                         "default": false,
                         "description": "If enabled, run verilator in WSL."
                     },
+                    "systemverilog.lintingVerilatorAutoScanDirLevel": {
+                        "type": "integer",
+                        "default": 3,
+                        "description": "Auto scan dir of current file with specified depth level to construct verilator's -y option."
+                    },
                     "systemverilog.disableCompletionProvider": {
                         "type": "boolean",
                         "default": false,
