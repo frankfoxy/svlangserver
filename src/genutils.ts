@@ -20,6 +20,12 @@ export const fsReadFile = util.promisify(fs.readFile);
 export const fsReadFileSync = fs.readFileSync;
 export const fsExists = util.promisify(fs.exists);
 
+export function filterVlogContent(content: string): string {
+    return content.replace(/(?:\/\/\s*|`\s*)pragma protect begin_protected(.*?)\n\s*(?:\/\/\s*|`\s*)pragma protect end_protected/s, (match, p1) => {
+        ConnectionLogger.warn(`Skip protect region : ${match.length} bytes`);
+        return ' '.repeat(match.length);
+    });
+}
 export async function fsWriteFile(file: string, content: string) {
     try {
         return fsMkDir(path.dirname(file), {recursive: true})

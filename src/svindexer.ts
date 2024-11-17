@@ -40,6 +40,7 @@ import {
 } from './svcompletion_grammar';
 
 import {
+    filterVlogContent,
     childProcessStdoutRedir,
     childProcessStderrRedir,
     ConnectionLogger,
@@ -503,7 +504,7 @@ export class SystemVerilogIndexer {
     }
 
     public processDocumentChanges(document: TextDocument) {
-        let text: string = document.getText();
+        let text: string = filterVlogContent(document.getText());
         let tokens: GrammarToken[] = this._completionGrammarEngine.tokenize(text);
         let file: string = uriToPath(document.uri);
         this._filesCompletionInfo.set(file, {tokens: tokens});

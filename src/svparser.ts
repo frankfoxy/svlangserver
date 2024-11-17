@@ -1,6 +1,7 @@
 import { TextDocument, Range, Position } from "vscode-languageserver/node";
 
 import {
+    filterVlogContent,
     ConnectionLogger,
     uriToPath
 } from './genutils';
@@ -2791,7 +2792,7 @@ export class SystemVerilogParser {
             this._preprocCache = preprocCache;
             this._fileSymbolsInfo = {};
             let preprocSymbols: SystemVerilogSymbol[];
-            [this._svtokens, this._tokenOrder, preprocSymbols] = this.tokenize(text || this._document.getText(), includeFilePaths, userDefinesMacroInfo);
+            [this._svtokens, this._tokenOrder, preprocSymbols] = this.tokenize(filterVlogContent(text || this._document.getText()), includeFilePaths, userDefinesMacroInfo);
             if (preprocSymbols.length > 0) {
                 this._fileSymbolsInfo.symbolsInfo = preprocSymbols;
             }

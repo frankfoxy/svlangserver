@@ -8,6 +8,7 @@ import {
 } from "vscode-languageserver/node";
 
 import {
+    filterVlogContent,
     ConnectionLogger,
     fsReadFileSync,
     uriToPath
@@ -234,7 +235,7 @@ export class SystemVerilogSymbol {
                         }
                         else {
                             let data = fsReadFileSync(uriToPath(<string>(defLocations[i])));
-                            currDocument = TextDocument.create(<string>(defLocations[i]), "SystemVerilog", 0, data.toString());
+                            currDocument = TextDocument.create(<string>(defLocations[i]), "SystemVerilog", 0, filterVlogContent(data.toString()));
                             documentMap.set(<string>(defLocations[i]), currDocument);
                         }
                     }

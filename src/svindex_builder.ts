@@ -16,6 +16,7 @@ import {
 } from './svparser';
 
 import {
+    filterVlogContent,
     ConnectionLogger,
     fsReadFile,
     pathToUri
@@ -50,7 +51,7 @@ process.on('message', (args) => {
             else {
                 fsReadFile(file)
                     .then((data) => {
-                        let document: TextDocument = TextDocument.create(pathToUri(file), "SystemVerilog", 0, data.toString());
+                        let document: TextDocument = TextDocument.create(pathToUri(file), "SystemVerilog", 0, filterVlogContent(data.toString()));
                         let fileSymbolsInfo: SystemVerilogParser.SystemVerilogFileSymbolsInfo;
                         let pkgdeps: string[];
                         [fileSymbolsInfo, pkgdeps] = _parser.parse(document, _includeFilePaths, _preprocCache, _userDefinesMacroInfo, "full");

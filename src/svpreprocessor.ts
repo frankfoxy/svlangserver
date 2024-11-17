@@ -1,6 +1,7 @@
 import { TextDocument, Location, Range, Position } from "vscode-languageserver/node";
 
 import {
+    filterVlogContent,
     ConnectionLogger,
     fsReadFileSync,
     pathToUri,
@@ -657,7 +658,7 @@ export class SystemVerilogPreprocessor {
                     else {
                         try {
                             let data = fsReadFileSync(includeFilePath);
-                            let document: TextDocument = TextDocument.create(pathToUri(includeFilePath), "SystemVerilog", 0, data.toString());
+                            let document: TextDocument = TextDocument.create(pathToUri(includeFilePath), "SystemVerilog", 0, filterVlogContent(data.toString()));
                             preprocIncInfo = (new SystemVerilogPreprocessor())._parseInc(document, this._includeFilePaths, this._preprocCache, this._macroInfo, this._fileList);
                             let incFileSymbol: SystemVerilogSymbol = new SystemVerilogSymbol(
                                 includeFilePath,
@@ -829,7 +830,7 @@ export class SystemVerilogPreprocessor {
     }
 
     private _parseInc(document: TextDocument, includeFilePaths: string[], preprocCache: Map<string, PreprocCacheEntry>, macroInfo: Map<string, MacroInfo>, fileList: Set<string>, text?: string): PreprocIncInfo {
-        let preText: string = text || document.getText();
+        let preText: string = filterVlogContent(text || document.getText());
         this._document = document;
         this._filePath = uriToPath(document.uri);
         this._fileList = fileList;
