@@ -1,5 +1,5 @@
 {
-    "name": "@imc-trading/svlangserver",
+    "name": "svlangserver",
     "description": "A language server for systemverilog",
     "keywords": [
         "sv",
@@ -106,6 +106,17 @@
             {
                 "title": "SystemVerilog Language Server",
                 "properties": {
+                    "systemverilog.trace.server": {
+                        "scope": "window",
+                        "type": "string",
+                        "enum": [
+                            "off",
+                            "messages",
+                            "verbose"
+                        ],
+                        "default": "off",
+                        "description": "Traces the communication between VS Code and the language server."
+                    },
                     "systemverilog.includeIndexing": {
                         "type": "array",
                         "default": [
