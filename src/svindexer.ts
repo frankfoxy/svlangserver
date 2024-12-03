@@ -339,6 +339,7 @@ export class SystemVerilogIndexer {
                         this._setHeaderSymbols(v.file, v.info);
                     }
                     ConnectionLogger.log(`INFO: Done indexing ${this._srcFiles.length + this._preprocCache.size} files!!!`);
+                    ConnectionLogger.log(`INFO:    ${this._srcFiles}`);
                     this._indexProgress = IndexProgressType.Done;
                     var endTime = performance.now();
                     ConnectionLogger.log(`INFO: Took ${endTime - startTime} milliseconds`);
