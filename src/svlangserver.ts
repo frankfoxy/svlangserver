@@ -63,12 +63,14 @@ import {
 import {
     ConnectionLogger,
     isStringListEqual,
+    pathToUri,
     uriToPath
 } from './genutils';
 
 import {
     default_settings
 } from './svutils';
+import { Diagnostic } from 'vscode';
 
 const BuildIndexCommand = "systemverilog.build_index"
 const ReportHierarchyCommand = "systemverilog.report_hierarchy"
@@ -135,9 +137,9 @@ connection.onInitialize((params: InitializeParams) => {
             definitionProvider: true,
             hoverProvider: true,
             signatureHelpProvider: {
-				triggerCharacters: [ '(', '[', ',' ],
-                retriggerCharacters: [ ',' ] //TBD Not supported in CoC!
-			},
+                triggerCharacters: ['(', '[', ','],
+                retriggerCharacters: [','] //TBD Not supported in CoC!
+            },
             executeCommandProvider: {
                 commands: [
                     BuildIndexCommand,
@@ -154,10 +156,10 @@ connection.onInitialize((params: InitializeParams) => {
 function getCurrentSettings(): Object {
     let currentSettings: Object = new Object();
     settings.forEach((val, prop) => { currentSettings[prop] = val; });
-    return {settings: currentSettings};
+    return { settings: currentSettings };
 }
 
-function getSettings() : Promise<Object> {
+function getSettings(): Promise<Object> {
     if (!hasConfigurationCapability) {
         return Promise.resolve(getCurrentSettings());
     }
@@ -167,20 +169,20 @@ function getSettings() : Promise<Object> {
             settings.forEach((val, prop) => {
                 initSettings[prop] = svSettings[prop] == undefined ? settings[prop] : svSettings[prop];
             });
-            return {settings: initSettings};
+            return { settings: initSettings };
         }).catch(error => {
             ConnectionLogger.error(error);
             return getCurrentSettings();
         });
     }
     else {
-        return connection.workspace.getConfiguration({section: 'systemverilog'}).then(svSettings => {
+        return connection.workspace.getConfiguration({ section: 'systemverilog' }).then(svSettings => {
             let initSettings: Object = new Object();
             settings.forEach((val, prop) => {
                 let nprop: string = prop.substring("systemverilog.".length);
                 initSettings[prop] = svSettings[nprop] == undefined ? settings[prop] : svSettings[nprop];
             });
-            return {settings: initSettings};
+            return { settings: initSettings };
         }).catch(error => {
             ConnectionLogger.error(error);
             return getCurrentSettings();
@@ -344,9 +346,21 @@ function lintDocument(uri: string, text?: string) {
     if (settings.get("systemverilog.disableLinting")) {
         return;
     }
+    ConnectionLogger.log(`${uriToPath(uri)}`);
+
     diagnostics.lint(uriToPath(uri), text)
         .then((diagnostics) => {
-            connection.sendDiagnostics({ uri: uri, diagnostics });
+            // get uniq source into array
+            let ss: string[] = diagnostics.map(d => d.source).filter((item, i, ar) => ar.indexOf(item) === i);
+            // ConnectionLogger.log(`${ss}`);
+            ss.forEach(s => {
+                let d = diagnostics.filter(item => item.source === s)
+                d.forEach(s => { s.source = "" + s.code; });
+                // ConnectionLogger.log(`${s} diag: ${d.length}`);
+                connection.sendDiagnostics({ uri: pathToUri(s), diagnostics: d });
+            });
+
+            // connection.sendDiagnostics({ uri: uri, diagnostics });
         })
         .catch((error) => {
             ConnectionLogger.error(error);
@@ -398,14 +412,14 @@ connection.onExecuteCommand((commandParams) => {
             const fileUri: string = svhiercalculator.calcHier(commandParams.arguments[0]);
             ConnectionLogger.log(`Hierarchy for ${commandParams.arguments[0]} available at ${fileUri}`);
             if (hasShowWindowCapability) {
-                connection.sendRequest("window/showDocument", {uri: fileUri, takeFocus: true});
+                connection.sendRequest("window/showDocument", { uri: fileUri, takeFocus: true });
             }
             else {
                 const editParams: ApplyWorkspaceEditParams = {
                     label: "Hierarchy",
                     edit: {
                         documentChanges: [
-                            TextDocumentEdit.create({uri: fileUri, version: null}, []),
+                            TextDocumentEdit.create({ uri: fileUri, version: null }, []),
                         ]
                     }
                 };

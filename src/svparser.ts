@@ -15,7 +15,7 @@ import {
     svcompletion_grammar
 } from './svcompletion_grammar';
 
-import { 
+import {
     DefinitionLocations,
     SystemVerilogSymbol,
     SystemVerilogSymbolJSON
@@ -55,7 +55,7 @@ function _jsonToContainerSymbolsInfo(file: string, jsonContainerSymbolsInfo: Sys
         if (jsonContainerSymbolsInfo[SystemVerilogParser.ContainerInfoIndex.Imports] != undefined) {
             containerSymbolsInfo.importsInfo = [];
             for (let importInfo of <SystemVerilogParser.SystemVerilogImportsInfoJSON>(jsonContainerSymbolsInfo[SystemVerilogParser.ContainerInfoIndex.Imports])) {
-                containerSymbolsInfo.importsInfo.push({pkg: importInfo[0], symbolsText: importInfo[1]});
+                containerSymbolsInfo.importsInfo.push({ pkg: importInfo[0], symbolsText: importInfo[1] });
             }
         }
     }
@@ -77,7 +77,7 @@ function _jsonToContainerSymbolsInfo(file: string, jsonContainerSymbolsInfo: Sys
         if (jsonContainerSymbolsInfo[SystemVerilogParser.ContainerInfoIndex.Exports] != undefined) {
             containerSymbolsInfo.exportsInfo = [];
             for (let exportInfo of <SystemVerilogParser.SystemVerilogExportsInfoJSON>(jsonContainerSymbolsInfo[SystemVerilogParser.ContainerInfoIndex.Exports])) {
-                containerSymbolsInfo.exportsInfo.push({pkg: exportInfo[0], symbolsText: exportInfo[1]});
+                containerSymbolsInfo.exportsInfo.push({ pkg: exportInfo[0], symbolsText: exportInfo[1] });
             }
         }
     }
@@ -240,10 +240,10 @@ class ContainerStack {
 
         if (exportParts[0] == "*") {
             if (this._stack.containersInfo.length <= 0) {
-                this._stack.fileInfo.exportsInfo = [{pkg: exportParts[0], symbolsText: ["*"] }];
+                this._stack.fileInfo.exportsInfo = [{ pkg: exportParts[0], symbolsText: ["*"] }];
             }
             else {
-                this._stack.containersInfo[this._stack.containersInfo.length - 1].info.exportsInfo = [{pkg: exportParts[0], symbolsText: ["*"] }];
+                this._stack.containersInfo[this._stack.containersInfo.length - 1].info.exportsInfo = [{ pkg: exportParts[0], symbolsText: ["*"] }];
             }
             return;
         }
@@ -408,17 +408,20 @@ export class SystemVerilogParser {
 
             let postText: string = preprocInfo.postTokens.map(tok => tok.text).join('');
             let tokens: GrammarToken[] = this._completionGrammarEngine.tokenize(postText);
-            let parseTokens: ParseToken[] = tokens.map(token => { return {text: token.text, scopes: token.scopes, startTokenIndex: undefined, endTokenIndex: undefined}; });
+            let parseTokens: ParseToken[] = tokens.map(token => { return { text: token.text, scopes: token.scopes, startTokenIndex: undefined, endTokenIndex: undefined }; });
             let tokenOrder: TokenOrderEntry[] = [];
             let currParseToken: number = 0;
             let tokenText: string = "";
             let tokenOrderIndex: number = 0;
             let tokenOrderFile: string;
+            let maxErrorLog: number = 16;
+            let nError: number = 0;
             for (let i: number = 0; i < preprocInfo.postTokens.length; i++) {
                 if ((tokenOrderIndex < preprocInfo.tokenOrder.length) &&
                     (preprocInfo.tokenOrder[tokenOrderIndex].tokenNum == i)) {
                     if ((tokenText != "") && (parseTokens[currParseToken].text.trim() != "")) {
-                        ConnectionLogger.error(`assumption about tokens not split across files might be broken for ${this._documentPath} at ${preprocInfo.tokenOrder[tokenOrderIndex].tokenNum}`);
+                        if (nError < maxErrorLog) ConnectionLogger.error(`[${this._documentPath} @ ${preprocInfo.tokenOrder[tokenOrderIndex].tokenNum}]: assumption about tokens not split across files might be broken`);
+                        nError++;
                     }
                     tokenOrderFile = preprocInfo.tokenOrder[tokenOrderIndex].file;
                     tokenOrderIndex++;
@@ -436,23 +439,25 @@ export class SystemVerilogParser {
 
                 if (tokenText.length >= parseTokens[currParseToken].text.length) {
                     if ((tokenText.length > parseTokens[currParseToken].text.length) || (tokenText != parseTokens[currParseToken].text)) {
-                        ConnectionLogger.error(`Assumption made for token re-ranging broken for token "${parseTokens[currParseToken].text}"`);
+                        if (nError < maxErrorLog) ConnectionLogger.error(`[${this._documentPath} ]: token re-ranging broken "${parseTokens[currParseToken].text}"`);
+                        nError++;
                     }
                     parseTokens[currParseToken].endTokenIndex = preprocInfo.postTokens[i].endIndex;
                     currParseToken++;
                     tokenText = "";
                 }
             }
+            if (nError > maxErrorLog) ConnectionLogger.error(`[${this._documentPath}]: ... ${nError - maxErrorLog} token errors not printing.`);
 
             return [parseTokens, tokenOrder, preprocInfo.symbols];
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [[], [], []];
         }
     }
 
     private _getElem<T>(list: T[], index?: number): T {
-        let _index: number = (index == undefined) ? list.length - 1: index;
+        let _index: number = (index == undefined) ? list.length - 1 : index;
         return (list.length > _index) && (_index >= 0) ? list[_index] : undefined;
     }
 
@@ -485,8 +490,8 @@ export class SystemVerilogParser {
 
         let refDocumentPath: string = this._containerStack.getContainerDocumentPath(document.uri);
         let endPos: Position = (this._document.uri == refDocumentPath)
-                             ? this._document.positionAt(this._svtokens[_token].endTokenIndex)
-                             : document.positionAt(this._svtokens[_token].endTokenIndex);
+            ? this._document.positionAt(this._svtokens[_token].endTokenIndex)
+            : document.positionAt(this._svtokens[_token].endTokenIndex);
         return (this._document.uri == refDocumentPath) ? { line: endPos.line, character: endPos.character } : { file: refDocumentPath, line: endPos.line, character: endPos.character };
     }
 
@@ -634,7 +639,7 @@ export class SystemVerilogParser {
 
         let prevToken: number;
         let simpleIdExpression: boolean = false;
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "parantheses.begin.systemverilog") &&
                 (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "parantheses.block.systemverilog")) {
                 this._currTokenNum--;
@@ -823,7 +828,7 @@ export class SystemVerilogParser {
 
             let scope: string = this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth + 1);
             if (((scope == "identifier.simple.systemverilog") || (scope == "identifier.escaped.systemverilog")) &&
-                     (this._svtokens[this._currTokenNum].text != "static") && (this._svtokens[this._currTokenNum].text != "automatic")) {
+                (this._svtokens[this._currTokenNum].text != "static") && (this._svtokens[this._currTokenNum].text != "automatic")) {
                 packageSymbol = this._pushContainerSymbol(this._currTokenNum, [this._svtokens[packageKeywordToken].text]);
             }
 
@@ -896,7 +901,7 @@ export class SystemVerilogParser {
             nextToken = this._nextNonIgnorableScope();
             if ((nextToken == undefined) ||
                 ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "identifier.simple.systemverilog") &&
-                 (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "identifier.escaped.systemverilog"))) {
+                    (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "identifier.escaped.systemverilog"))) {
                 this._currTokenNum = _currTokenNum;
                 return false;
             }
@@ -991,22 +996,22 @@ export class SystemVerilogParser {
 
         return true;
     }
-/*
-= ["const"] ["var"] ["static"|"automatic"] integer_vector_type ["signed"|"unsigned"] {packed_dimension} {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] integer_atom_type ["signed"|unsigned"] {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] non_integer_type {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] struct_union ["packed"] ["signed"|"unsigned"] "{" struct_union_member {"," struct_union_member} "}" {packed_dimension} {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] "string"|"chandle" {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] "virtual" ["interface"] interface_identifier [parameter_value_assignment] ["." modport_identifier] {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] [class_scope|package_scope] type_identifier {packed_dimension} {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] ps_class_identifier [parameter_value_assignment] {"::" class_identifier [parameter_value_asisgnment]} {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] "event" {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] ps_covergroup_identifier {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] "type" "("...")" {list_of_variable_decl_assignments} ";"
-| ["const"] ["var"] ["static"|"automatic"] ["signed"|"unsigned"] {packed_dimension} {list_of_variable_decl_assignments} ";"
-| "typedef" ...
-| "nettype" ...
-*/
+    /*
+    = ["const"] ["var"] ["static"|"automatic"] integer_vector_type ["signed"|"unsigned"] {packed_dimension} {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] integer_atom_type ["signed"|unsigned"] {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] non_integer_type {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] struct_union ["packed"] ["signed"|"unsigned"] "{" struct_union_member {"," struct_union_member} "}" {packed_dimension} {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] "string"|"chandle" {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] "virtual" ["interface"] interface_identifier [parameter_value_assignment] ["." modport_identifier] {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] [class_scope|package_scope] type_identifier {packed_dimension} {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] ps_class_identifier [parameter_value_assignment] {"::" class_identifier [parameter_value_asisgnment]} {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] "event" {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] ps_covergroup_identifier {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] "type" "("...")" {list_of_variable_decl_assignments} ";"
+    | ["const"] ["var"] ["static"|"automatic"] ["signed"|"unsigned"] {packed_dimension} {list_of_variable_decl_assignments} ";"
+    | "typedef" ...
+    | "nettype" ...
+    */
     private _processRoutineVarDeclaration() {
         let _currTokenNum = this._currTokenNum;
         let scopeDepth: number = this._svtokens[this._currTokenNum].scopes.length - 1;
@@ -1035,9 +1040,9 @@ export class SystemVerilogParser {
                 if (startToken == undefined) {
                     startToken = this._currTokenNum;
                     if (["assign", "unique", "unique0", "priority", "case", "casex", "casez", "if", "void", "disable",
-                         "forever", "repeat", "while", "for", "do", "foreach", "return", "break", "continue", "fork",
-                         "begin", "wait", "wait_order", "assert", "assume", "cover", "restrict", "randcase", "randsequence",
-                         "expect"].indexOf(this._svtokens[startToken].text) >= 0) {
+                        "forever", "repeat", "while", "for", "do", "foreach", "return", "break", "continue", "fork",
+                        "begin", "wait", "wait_order", "assert", "assume", "cover", "restrict", "randcase", "randsequence",
+                        "expect"].indexOf(this._svtokens[startToken].text) >= 0) {
                         this._currTokenNum = _currTokenNum;
                         return false;
                     }
@@ -1115,8 +1120,8 @@ export class SystemVerilogParser {
 
     private _processRoutineBody() {
         this._currTokenNum++;
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
-            let scope:string = this._getElem(this._svtokens[this._currTokenNum].scopes);
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+            let scope: string = this._getElem(this._svtokens[this._currTokenNum].scopes);
             if (this._notIgnorableScope()) {
                 //ConnectionLogger.log(`DEBUG: Routine body parsing at ${this._svtokens[this._currTokenNum].text}`);
                 if ((scope == "identifier.simple.systemverilog") &&
@@ -1173,7 +1178,7 @@ export class SystemVerilogParser {
         for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if ((this._svtokens[this._currTokenNum].scopes.length <= scopeDepth) ||
                 ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "parameter.declaration.systemverilog") &&
-                 (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "parameter.expression.systemverilog"))) {
+                    (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "parameter.expression.systemverilog"))) {
                 this._currTokenNum--;
                 break;
             }
@@ -1243,7 +1248,7 @@ export class SystemVerilogParser {
                             this._processPortList(); //TBD handle import_export functions
                             this._containerStack.pop(this._getEndPosition());
                             modportSymbol.defLocations = this._getDefLocations(modportToken, this._currTokenNum),
-                            modportToken = undefined;
+                                modportToken = undefined;
                         }
                     }
                     else {
@@ -1275,7 +1280,7 @@ export class SystemVerilogParser {
         let prevIdToken: number;
         let prevToken: number;
         let memberSymbol: SystemVerilogSymbol;
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "struct_union_member_list.body.systemverilog") &&
                 (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "struct_union_member.expression.systemverilog")) {
                 this._currTokenNum--;
@@ -1338,7 +1343,7 @@ export class SystemVerilogParser {
         let structSymbol: SystemVerilogSymbol = this._pushContainerSymbol(structUnionTypeToken, [this._svtokens[structUnionTypeToken].text], undefined, structUnionName);
         this._anonStructUnionCount++;
 
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "struct_union.declaration.systemverilog") {
                 this._currTokenNum--;
                 break;
@@ -1368,7 +1373,7 @@ export class SystemVerilogParser {
         let memberToken: number;
         let prevToken: number;
         let memberSymbol: SystemVerilogSymbol;
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "enum_list.body.systemverilog") &&
                 (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "enum.expression.systemverilog")) {
                 this._currTokenNum--;
@@ -1384,10 +1389,10 @@ export class SystemVerilogParser {
                     }
                 }
                 else if ((scope == "operator.comma.systemverilog") ||
-                         (scope == "enum_list.end.systemverilog")) {
+                    (scope == "enum_list.end.systemverilog")) {
                     if (memberToken != undefined) {
                         memberSymbol.defLocations = this._getDefLocations(memberToken, prevToken),
-                        memberToken = undefined;
+                            memberToken = undefined;
                     }
                 }
 
@@ -1411,7 +1416,7 @@ export class SystemVerilogParser {
         let enumName: string = `#AnonymousEnum${this._anonEnumCount}`
         this._anonEnumCount++;
 
-        for(; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
+        for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
             if (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "enum.declaration.systemverilog") {
                 this._currTokenNum--;
                 break;
@@ -1556,14 +1561,14 @@ export class SystemVerilogParser {
 
     private _ignoreActionBlock() {
         let _currTokenNum: number = this._currTokenNum;
-        let nextToken: number = this._nextNonIgnorableScope(); 
+        let nextToken: number = this._nextNonIgnorableScope();
         if ((nextToken != undefined) && (this._getElem(this._svtokens[nextToken].scopes) == "identifier.simple.systemverilog") && (this._svtokens[nextToken].text == "else")) {
             this._ignoreStatement();
         }
         else {
             this._currTokenNum = _currTokenNum;
             this._ignoreStatement();
-            
+
             _currTokenNum = this._currTokenNum;
             nextToken = this._nextNonIgnorableScope();
             if ((nextToken != undefined) && (this._getElem(this._svtokens[nextToken].scopes) == "identifier.simple.systemverilog") && (this._svtokens[nextToken].text == "else")) {
@@ -1639,7 +1644,7 @@ export class SystemVerilogParser {
                     break;
                 }
                 else if ((scope == "identifier.simple.systemverilog") &&
-                         ((tokenText == "return") || (tokenText == "break") || (tokenText == "continue"))) {
+                    ((tokenText == "return") || (tokenText == "break") || (tokenText == "continue"))) {
                     this._ignoreTillSemiColon();
                     break;
                 }
@@ -1735,7 +1740,7 @@ export class SystemVerilogParser {
                         this._currTokenNum++;
                         if ((this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) == "meta.whitespace.systemverilog") &&
                             ((this._svtokens[this._currTokenNum].text.startsWith("\n")) ||
-                             (this._svtokens[this._currTokenNum].text.startsWith("\r")))) {
+                                (this._svtokens[this._currTokenNum].text.startsWith("\r")))) {
                             break;
                         }
                         else {
@@ -1850,7 +1855,7 @@ export class SystemVerilogParser {
         let portSymbol: SystemVerilogSymbol;
         let assignExprOn: Boolean = false;
         for (; this._currTokenNum < this._svtokens.length; this._currTokenNum++) {
-            if ((this._svtokens[this._currTokenNum].scopes.length <= scopeDepth) || 
+            if ((this._svtokens[this._currTokenNum].scopes.length <= scopeDepth) ||
                 (!assignExprOn && (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "port_declaration.list.systemverilog")) ||
                 (assignExprOn && (this._getElem(this._svtokens[this._currTokenNum].scopes, scopeDepth) != "port_declaration.expression.systemverilog"))) {
                 this._currTokenNum--;
@@ -2555,16 +2560,16 @@ export class SystemVerilogParser {
             return [undefined, undefined];
         }
         if (["supply0", "supply1", "tri", "triand", "trior", "trireg", "tri0", "tri1", "uwire", "wire", "wand", "wor",
-             "interconnect", "const", "var", "static", "automatic", "rand", "genvar",
-             "bit", "logic", "reg", "byte", "shortint", "int", "longint", "integer", "time",
-             "shortreal", "real", "realtime", "struct", "union", "enum", "string", "chandle",
-             "virtual", "interface", "event", "type"].indexOf(this._svtokens[startToken].text) >= 0) {
+            "interconnect", "const", "var", "static", "automatic", "rand", "genvar",
+            "bit", "logic", "reg", "byte", "shortint", "int", "longint", "integer", "time",
+            "shortreal", "real", "realtime", "struct", "union", "enum", "string", "chandle",
+            "virtual", "interface", "event", "type"].indexOf(this._svtokens[startToken].text) >= 0) {
             this._currTokenNum = _startTokenNum;
             return [false, this._svtokens[startToken].text];
         }
-        else if(["cmos", "rmos", "bufif0", "bufif1", "notif0", "notif1",
-                 "nmos", "pmos", "rnmos", "rpmos", "and", "nand", "or", "nor", "xor", "xnor", "buf", "not",
-                 "tranif0", "trainf1", "rtranif1", "rtranif0", "tran", "rtran", "pulldown", "pullup"].indexOf(this._svtokens[startToken].text) >= 0) {
+        else if (["cmos", "rmos", "bufif0", "bufif1", "notif0", "notif1",
+            "nmos", "pmos", "rnmos", "rpmos", "and", "nand", "or", "nor", "xor", "xnor", "buf", "not",
+            "tranif0", "trainf1", "rtranif1", "rtranif0", "tran", "rtran", "pulldown", "pullup"].indexOf(this._svtokens[startToken].text) >= 0) {
             this._currTokenNum = _startTokenNum;
             return [true, this._svtokens[startToken].text];
         }
@@ -2576,7 +2581,7 @@ export class SystemVerilogParser {
             if (this._notIgnorableScope()) {
                 if ((prevToken != undefined) && (scope == "parantheses.begin.systemverilog") &&
                     ((this._getElem(this._svtokens[prevToken].scopes, scopeDepth) != "operator.other.systemverilog") ||
-                     (this._svtokens[prevToken].text != "#"))) {
+                        (this._svtokens[prevToken].text != "#"))) {
                     if (this._isDriveStrength()) {
                         this._currTokenNum = _startTokenNum;
                         return [true, this._svtokens[startToken].text];
@@ -2785,7 +2790,7 @@ export class SystemVerilogParser {
     }
 
     public parse(document: TextDocument, includeFilePaths: string[], preprocCache: Map<string, PreprocCacheEntry>,
-                 userDefinesMacroInfo: Map<string, MacroInfo>, _precision: string="full", _maxDepth: number=-1, text?: string): [SystemVerilogParser.SystemVerilogFileSymbolsInfo, string[]] {
+        userDefinesMacroInfo: Map<string, MacroInfo>, _precision: string = "full", _maxDepth: number = -1, text?: string): [SystemVerilogParser.SystemVerilogFileSymbolsInfo, string[]] {
         try {
             this._document = document;
             this._documentPath = uriToPath(document.uri);
@@ -2854,7 +2859,7 @@ export class SystemVerilogParser {
             //}
 
             return [this._fileSymbolsInfo, [...pkgdeps]];
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [{}, []];
         }
@@ -2872,7 +2877,7 @@ export class SystemVerilogParser {
     public static preprocCacheFromJSON(preprocCacheJSON): Map<string, PreprocCacheEntry> {
         try {
             return new Map(preprocCacheJSON.map(e => [e[0], { file: e[1][0], info: SystemVerilogPreprocessor.preprocIncInfoFromJSON(e[0], e[1][1]), doc: TextDocument.create(e[1][2]._uri, e[1][2]._languageId, e[1][2]._version, e[1][2]._content) }]));
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return new Map();
         }
@@ -2909,7 +2914,7 @@ export namespace SystemVerilogParser {
         containersInfo?: SystemVerilogContainersInfo,
         exportsInfo?: SystemVerilogExportsInfo
     };
-    export type SystemVerilogContainerInfo = { symbol: SystemVerilogSymbol, position: SystemVerilogPosition, info: SystemVerilogContainerSymbolsInfo};
+    export type SystemVerilogContainerInfo = { symbol: SystemVerilogSymbol, position: SystemVerilogPosition, info: SystemVerilogContainerSymbolsInfo };
     export type SystemVerilogContainersInfo = SystemVerilogContainerInfo[];
     export type SystemVerilogIncludesInfo = SystemVerilogIncludeInfo[];
     export type SystemVerilogFileSymbolsInfo = {
@@ -2920,17 +2925,17 @@ export namespace SystemVerilogParser {
         exportsInfo?: SystemVerilogExportsInfo
     };
 
-    export type SystemVerilogPositionJSON = [number, number]|[string, [number, number]];
+    export type SystemVerilogPositionJSON = [number, number] | [string, [number, number]];
     export type SystemVerilogSymbolInfoJSON = SystemVerilogSymbolJSON;
     export type SystemVerilogImportInfoJSON = [string, string[]];
     export type SystemVerilogExportInfoJSON = [string, string[]];
     export type SystemVerilogImportsInfoJSON = SystemVerilogImportInfoJSON[];
     export type SystemVerilogExportsInfoJSON = SystemVerilogExportInfoJSON[];
     export type SystemVerilogSymbolsInfoJSON = SystemVerilogSymbolInfoJSON[];
-    export type SystemVerilogContainerSymbolsInfoJSON = (SystemVerilogSymbolsInfoJSON|SystemVerilogImportsInfoJSON|SystemVerilogContainersInfoJSON|SystemVerilogExportsInfoJSON)[];
+    export type SystemVerilogContainerSymbolsInfoJSON = (SystemVerilogSymbolsInfoJSON | SystemVerilogImportsInfoJSON | SystemVerilogContainersInfoJSON | SystemVerilogExportsInfoJSON)[];
     export type SystemVerilogContainerInfoJSON = [[SystemVerilogSymbolJSON, SystemVerilogPositionJSON], SystemVerilogContainerSymbolsInfoJSON];
     export type SystemVerilogContainersInfoJSON = SystemVerilogContainerInfoJSON[];
-    export type SystemVerilogFileSymbolsInfoJSON = (SystemVerilogContainersInfoJSON|SystemVerilogIncludesInfo|SystemVerilogSymbolsInfoJSON|SystemVerilogImportsInfoJSON|SystemVerilogExportsInfoJSON)[];
+    export type SystemVerilogFileSymbolsInfoJSON = (SystemVerilogContainersInfoJSON | SystemVerilogIncludesInfo | SystemVerilogSymbolsInfoJSON | SystemVerilogImportsInfoJSON | SystemVerilogExportsInfoJSON)[];
 
     export function fileTopSymbols(fileSymbolsInfo: SystemVerilogFileSymbolsInfo, strict: Boolean = false): SystemVerilogSymbol[] {
         try {
@@ -2948,7 +2953,7 @@ export namespace SystemVerilogParser {
             }
 
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -2961,7 +2966,7 @@ export namespace SystemVerilogParser {
                 return fileSymbolsInfo.containersInfo;
             }
             return [];
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -2985,7 +2990,7 @@ export namespace SystemVerilogParser {
             }
 
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3005,7 +3010,7 @@ export namespace SystemVerilogParser {
             }
 
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3018,7 +3023,7 @@ export namespace SystemVerilogParser {
                 return containerInfo.info.containersInfo;
             }
             return [];
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3032,7 +3037,7 @@ export namespace SystemVerilogParser {
                 symbols = symbols.concat(containerInfo.info.symbolsInfo);
             }
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3065,7 +3070,7 @@ export namespace SystemVerilogParser {
             }
 
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3085,7 +3090,7 @@ export namespace SystemVerilogParser {
             }
 
             return symbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3097,7 +3102,7 @@ export namespace SystemVerilogParser {
                 return fileSymbolsInfo.containersInfo.find(cntnr => { return cntnr.symbol.name == cntnrName; });
             }
             return undefined;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return undefined;
         }
@@ -3145,7 +3150,7 @@ export namespace SystemVerilogParser {
             else {
                 return undefined;
             }
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return undefined;
         }
@@ -3158,7 +3163,7 @@ export namespace SystemVerilogParser {
                 instSymbols = containerSymbolsInfo.symbolsInfo.filter(sym => sym.type[0] == "instance");
             }
             return instSymbols;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3206,7 +3211,7 @@ export namespace SystemVerilogParser {
             else {
                 return undefined;
             }
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return undefined;
         }
@@ -3272,7 +3277,7 @@ export namespace SystemVerilogParser {
             }
 
             return fileSymbolsInfo;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return {};
         }
@@ -3395,7 +3400,7 @@ export namespace SystemVerilogParser {
             }
 
             return fileSymbolsInfoJson;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3407,7 +3412,7 @@ export namespace SystemVerilogParser {
             fileSymbolsInfo.symbolsInfo = symbols;
             fileSymbolsInfo.includesInfo = includes == undefined ? undefined : [...includes];
             return fileSymbolsInfo;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return {};
         }
@@ -3428,7 +3433,7 @@ export namespace SystemVerilogParser {
             }
 
             return containerImportsInfo;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3449,7 +3454,7 @@ export namespace SystemVerilogParser {
             }
 
             return fileImportsInfo;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }
@@ -3470,7 +3475,7 @@ export namespace SystemVerilogParser {
             }
 
             return containerExportsInfo;
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return [];
         }

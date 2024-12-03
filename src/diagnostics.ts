@@ -119,15 +119,22 @@ function parseVerilatorDiagnostics(
         // ConnectionLogger.log(`DEBUG: file ${file}`);
     }
 
-    let regex: RegExp = new RegExp(
+    let regexCurFile: RegExp = new RegExp(
         String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: (${file.replace(
             /[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}):(\d+):(?:(\d+):)? (.*)`,
         'i');
+    let regexAllFile: RegExp = new RegExp(
+        String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: ([^:]+):(\d+):(?:(\d+):)? (.*)`, 'i');
 
+    // ConnectionLogger.log(`verilator regex: ${file.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}`);
     // Parse output lines
     for (let i = 0; i < lines.length; ++i) {
         const line = lines[i];
-        let terms = line.match(regex);
+
+        // let m = line.match(regexAllFile);
+        // if (m != null) ConnectionLogger.log(`verilator: ${line}`);
+
+        let terms = line.match(regexAllFile);
         if (terms != null) {
             let severity = getVerilatorSeverity(terms[1]);
             let message = '';
@@ -138,6 +145,8 @@ function parseVerilatorDiagnostics(
                 colNum = parseInt(terms[5]) - 1;
             }
             message = terms[6];
+
+            ConnectionLogger.log(`verilator: ${line}`);
 
             let messageWhiteListed: Boolean = false;
             for (let whitelistedMessage of whitelistedMessages) {
@@ -169,7 +178,7 @@ function parseVerilatorDiagnostics(
                         colNumEnd < colNum ? colNum : colNumEnd),
                     message: message,
                     code: 'verilator',
-                    source: 'verilator'
+                    source: terms[3] // attach file path on source 
                 });
             }
         }
@@ -356,7 +365,7 @@ export class VerilogDiagnostics {
                     if (useWSL && !command.startsWith('wsl '))
                         command = 'wsl ' + command;
 
-                    ConnectionLogger.log(`DEBUG: verilator command ${command}`);
+                    ConnectionLogger.log(`DEBUG: verilator command: ${command}`);
                     this._childProcMngr.run(
                         file, command, (status, error, stdout, stderr) => {
                             if (optionsFile != this._optionsFile) {
@@ -371,9 +380,14 @@ export class VerilogDiagnostics {
                                             this._whitelistedMessages));
                                         break;
                                     case 'verilator':
-                                        resolve(parseVerilatorDiagnostics(
-                                            stdout, stderr, actFile,
-                                            this._whitelistedMessages));
+                                        let diagnostics: Diagnostic[] = parseVerilatorDiagnostics(
+                                            stdout, stderr, actFile, this._whitelistedMessages);
+                                        if (useWSL) {
+                                            diagnostics.forEach(d => {
+                                                d.source = d.source.replace(/\/mnt\/([a-zA-Z]+)/, "\$1:").replace(/\//g, '\\');
+                                            });
+                                        }
+                                        resolve(diagnostics);
                                         break;
                                     default:
                                         reject(new Error(`Unknown linter ${this._linter}`));
