@@ -383,11 +383,11 @@ function lintDocument(uri: string, text?: string) {
                         relatedInformation: diagErrorRelated,
                     });
                 } else {
-                    diags.push({
-                        severity: DiagnosticSeverity.Information,
-                        range: Range.create(1, 0, 1, 0),
-                        message: `Linting OK`
-                    });
+                    // diags.push({
+                    //     severity: DiagnosticSeverity.Information,
+                    //     range: Range.create(99999, 0, 99999, 0),
+                    //     message: `Linting OK`
+                    // });
                 }
                 connection.sendDiagnostics({ uri: uri, diagnostics: diags });
             }
