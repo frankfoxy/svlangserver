@@ -126,7 +126,7 @@ function parseVerilatorDiagnostics(
     let regexAllFile: RegExp = new RegExp(
         String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: ([^:]+):(\d+):(?:(\d+):)? (.*)`, 'i');
 
-    // ConnectionLogger.log(`verilator regex: ${file.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}`);
+    ConnectionLogger.log(`verilator regex: ${file.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}`);
     // Parse output lines
     for (let i = 0; i < lines.length; ++i) {
         const line = lines[i];
@@ -146,7 +146,8 @@ function parseVerilatorDiagnostics(
             }
             message = terms[6];
 
-            ConnectionLogger.log(`verilator: ${line}`);
+            // if (/%Error/.test(line))
+            ConnectionLogger.log(`  >> ${line}`);
 
             let messageWhiteListed: Boolean = false;
             for (let whitelistedMessage of whitelistedMessages) {
@@ -170,17 +171,17 @@ function parseVerilatorDiagnostics(
                 i += 2;
             }
 
-            if ((lineNum != NaN) && (colNum != NaN)) {
-                diagnostics.push({
-                    severity: severity,
-                    range: Range.create(
-                        lineNum, colNum, lineNum,
-                        colNumEnd < colNum ? colNum : colNumEnd),
-                    message: message,
-                    code: 'verilator',
-                    source: terms[3] // attach file path on source 
-                });
-            }
+            // if ((lineNum != NaN) && (colNum != NaN)) {
+            diagnostics.push({
+                severity: severity,
+                range: Range.create(
+                    lineNum, colNum, lineNum,
+                    colNumEnd < colNum ? colNum : colNumEnd),
+                message: message,
+                code: 'verilator',
+                source: terms[3] // attach file path on source 
+            });
+            // }
         }
     }
 
@@ -237,15 +238,15 @@ function parseIcarusDiagnostics(
                 continue;
             }
 
-            if (lineNum != NaN) {
-                diagnostics.push({
-                    severity: severity,
-                    range: Range.create(lineNum, 0, lineNum, 0),
-                    message: message,
-                    code: 'iverilog',
-                    source: 'iverilog'
-                });
-            }
+            // if (lineNum != NaN) {
+            diagnostics.push({
+                severity: severity,
+                range: Range.create(lineNum, 0, lineNum, 0),
+                message: message,
+                code: 'iverilog',
+                source: 'iverilog'
+            });
+            // }
         }
     }
 
@@ -290,9 +291,8 @@ export class VerilogDiagnostics {
         this._childProcMngr.kill(file);
         return new Promise((resolve, reject) => {
             let fileWithoutRoot: string = file.slice(path.parse(file).root.length);
-            let actFile: string = text == undefined ?
-                file :
-                tmpFileManager.getTmpFilePath('sources', fileWithoutRoot);
+            let useTempFile = text != undefined
+            let actFile: string = text == undefined ? file : tmpFileManager.getTmpFilePath('sources', fileWithoutRoot);
             let optionsFile: string = this._optionsFile;
             let vcTmpFileNum: number;
             if (text != undefined) {
@@ -365,7 +365,8 @@ export class VerilogDiagnostics {
                     if (useWSL && !command.startsWith('wsl '))
                         command = 'wsl ' + command;
 
-                    ConnectionLogger.log(`DEBUG: verilator command: ${command}`);
+                    ConnectionLogger.log(`>>>>>>>> verilator command >>>>>>>>\n ${command}`)
+                    ConnectionLogger.log(`>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`);
                     this._childProcMngr.run(
                         file, command, (status, error, stdout, stderr) => {
                             if (optionsFile != this._optionsFile) {
@@ -384,8 +385,13 @@ export class VerilogDiagnostics {
                                             stdout, stderr, actFile, this._whitelistedMessages);
                                         if (useWSL) {
                                             diagnostics.forEach(d => {
-                                                d.source = d.source.replace(/\/mnt\/([a-zA-Z]+)/, "\$1:").replace(/\//g, '\\');
+                                                // ConnectionLogger.log(`>>>>>>${useTempFile}, ${d.source}, ${fileWithoutRoot}`);
+                                                if (useTempFile && d.source.endsWith(fileWithoutRoot.replace(/\\/g, '/')))
+                                                    d.source = file
+                                                else
+                                                    d.source = d.source.replace(/\/mnt\/([a-zA-Z]+)/, "\$1:").replace(/\//g, '\\');
                                             });
+                                            diagnostics = diagnostics.filter(d => !tmpFileManager.isTmpPath(d.source));
                                         }
                                         resolve(diagnostics);
                                         break;

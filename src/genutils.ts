@@ -266,6 +266,10 @@ class TmpFileManager {
         return path.join(this._tmpDir.name, ...elems);
     }
 
+    public isTmpPath(path: string): boolean {
+        return path.startsWith(this._tmpDir);
+    }
+
     public cleanupTmpFiles() {
         this._tmpDir.removeCallback();
     }

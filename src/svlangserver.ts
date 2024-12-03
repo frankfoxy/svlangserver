@@ -64,13 +64,14 @@ import {
     ConnectionLogger,
     isStringListEqual,
     pathToUri,
+    tmpFileManager,
     uriToPath
 } from './genutils';
 
 import {
     default_settings
 } from './svutils';
-import { Diagnostic } from 'vscode';
+import { Diagnostic, DiagnosticSeverity, DiagnosticRelatedInformation, Range } from 'vscode-languageserver/node';
 
 const BuildIndexCommand = "systemverilog.build_index"
 const ReportHierarchyCommand = "systemverilog.report_hierarchy"
@@ -346,20 +347,58 @@ function lintDocument(uri: string, text?: string) {
     if (settings.get("systemverilog.disableLinting")) {
         return;
     }
-    ConnectionLogger.log(`${uriToPath(uri)}`);
 
-    diagnostics.lint(uriToPath(uri), text)
+    let lintFile: string = uriToPath(uri);
+    ConnectionLogger.log(`linting ${lintFile}`);
+
+    diagnostics.lint(lintFile, text)
         .then((diagnostics) => {
+
             // get uniq source into array
             let ss: string[] = diagnostics.map(d => d.source).filter((item, i, ar) => ar.indexOf(item) === i);
             // ConnectionLogger.log(`${ss}`);
+
+            if (ss.indexOf(lintFile) === -1) {
+                // summary other file errors 
+                let diags: Diagnostic[] = [];
+
+                let diagErrorRelated: DiagnosticRelatedInformation[] = [];
+                let errorDiags = diagnostics.filter(d => d.severity == DiagnosticSeverity.Error)
+                errorDiags.forEach(e => {
+                    diagErrorRelated.push({
+                        location: {
+                            uri: pathToUri(e.source),
+                            range: e.range,
+                        },
+                        message: e.message
+                    })
+                });
+                if (errorDiags.length > 0) {
+                    diags.push({
+                        severity: DiagnosticSeverity.Error,
+                        range: Range.create(1, 0, 1, 0),
+                        message: `Linting NG: ${errorDiags.length} errors found in other files.`,
+                        code: errorDiags[0].code,
+                        source: errorDiags[0].source,
+                        relatedInformation: diagErrorRelated,
+                    });
+                } else {
+                    diags.push({
+                        severity: DiagnosticSeverity.Information,
+                        range: Range.create(1, 0, 1, 0),
+                        message: `Linting OK`
+                    });
+                }
+                connection.sendDiagnostics({ uri: uri, diagnostics: diags });
+            }
+
+            // send diagnostics for other files
             ss.forEach(s => {
                 let d = diagnostics.filter(item => item.source === s)
                 d.forEach(s => { s.source = "" + s.code; });
-                // ConnectionLogger.log(`${s} diag: ${d.length}`);
+                ConnectionLogger.log(` * diag item cnt: ${s} : ${d.length}`);
                 connection.sendDiagnostics({ uri: pathToUri(s), diagnostics: d });
             });
-
             // connection.sendDiagnostics({ uri: uri, diagnostics });
         })
         .catch((error) => {
