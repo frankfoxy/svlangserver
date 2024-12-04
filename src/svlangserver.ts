@@ -358,9 +358,10 @@ function lintDocument(uri: string, text?: string) {
             let ss: string[] = diagnostics.map(d => d.source).filter((item, i, ar) => ar.indexOf(item) === i);
             // ConnectionLogger.log(`${ss}`);
 
-            if (ss.indexOf(lintFile) === -1) {
+            // send diagnostics for current file
+            {
                 // summary other file errors 
-                let diags: Diagnostic[] = [];
+                let diags: Diagnostic[] = diagnostics.filter(item => item.source === lintFile)
 
                 let diagErrorRelated: DiagnosticRelatedInformation[] = [];
                 let errorDiags = diagnostics.filter(d => d.severity == DiagnosticSeverity.Error)
@@ -394,10 +395,12 @@ function lintDocument(uri: string, text?: string) {
 
             // send diagnostics for other files
             ss.forEach(s => {
-                let d = diagnostics.filter(item => item.source === s)
-                d.forEach(s => { ss = s.code.toString().split("-"); s.source = ss[0]; s.code = ss[1]; });
-                ConnectionLogger.log(` * diag item cnt: ${s} : ${d.length}`);
-                connection.sendDiagnostics({ uri: pathToUri(s), diagnostics: d });
+                if (s !== lintFile) {
+                    let d = diagnostics.filter(item => item.source === s)
+                    d.forEach(s => { ss = s.code.toString().split("-"); s.source = ss[0]; s.code = ss[1]; });
+                    ConnectionLogger.log(` * diag item cnt: ${s} : ${d.length}`);
+                    connection.sendDiagnostics({ uri: pathToUri(s), diagnostics: d });
+                }
             });
             // connection.sendDiagnostics({ uri: uri, diagnostics });
         })
