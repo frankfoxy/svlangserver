@@ -28,7 +28,7 @@ export function filterVlogContent(content: string): string {
 }
 export async function fsWriteFile(file: string, content: string) {
     try {
-        return fsMkDir(path.dirname(file), {recursive: true})
+        return fsMkDir(path.dirname(file), { recursive: true })
             .then(() => { return _fsWriteFile(file, content); })
             .catch(error => { ConnectionLogger.error(error); });
     } catch (error) {
@@ -38,7 +38,7 @@ export async function fsWriteFile(file: string, content: string) {
 
 export function fsWriteFileSync(file: string, content: string): boolean {
     try {
-        fs.mkdirSync(path.dirname(file), {recursive: true});
+        fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, content);
         return true;
     } catch (error) {
@@ -62,7 +62,7 @@ export function uriToPath(uri: string): string {
         let fsPath: string = URI.parse(uri).fsPath;
         try {
             return fs.realpathSync(fsPath);
-        } catch(error) {
+        } catch (error) {
             ConnectionLogger.error(error);
             return fsPath;
         }
@@ -74,7 +74,7 @@ export function uriToPath(uri: string): string {
 
 export function pathToUri(path: string): string {
     try {
-        return(URI.file(path).toString());
+        return (URI.file(path).toString());
     } catch (error) {
         ConnectionLogger.error(error);
         return undefined;
@@ -92,8 +92,9 @@ export function resolvedPath(file: string): string {
 
 export function getTmpDirSync() {
     try {
-        return tmp.dirSync({unsafeCleanup: true});
+        return tmp.dirSync({ unsafeCleanup: true });
     } catch (error) {
+
         ConnectionLogger.error(error);
         return undefined;
     }
@@ -134,7 +135,7 @@ export class ConnectionLogger {
 
     private static sendNotification(type: MessageType, message: string) {
         if (!ConnectionLogger._connection) {
-            switch(type) {
+            switch (type) {
                 case MessageType.Error: {
                     console.error(message);
                     break;
@@ -148,28 +149,27 @@ export class ConnectionLogger {
         }
         else {
             try {
-                ConnectionLogger._connection.sendNotification(LogMessageNotification.type, {type: type, message: message});
-            } catch(error) {
+                ConnectionLogger._connection.sendNotification(LogMessageNotification.type, { type: type, message: message });
+            } catch (error) {
                 console.error(error);
             }
         }
     }
 
-    public static setConnection(connection)
-    {
+    public static setConnection(connection) {
         ConnectionLogger._connection = connection;
     }
 
     public static log(message: string, prefix: boolean = true) {
-        ConnectionLogger.sendNotification(MessageType.Log, `${prefix ? "INFO: ": ""}${message}`);
+        ConnectionLogger.sendNotification(MessageType.Log, `${prefix ? "INFO: " : ""}${message}`);
     }
 
     public static warn(message: string, prefix: boolean = true) {
-        ConnectionLogger.sendNotification(MessageType.Warning, `${prefix ? "WARNING: ": ""}${message}`);
+        ConnectionLogger.sendNotification(MessageType.Warning, `${prefix ? "WARNING: " : ""}${message}`);
     }
 
     public static error(message: string, prefix: boolean = true) {
-        ConnectionLogger.sendNotification(MessageType.Error,`${prefix ? "ERROR: ": ""}${message}`);
+        ConnectionLogger.sendNotification(MessageType.Error, `${prefix ? "ERROR: " : ""}${message}`);
     }
 }
 
@@ -256,7 +256,7 @@ export class ChildProcManager {
 
 class TmpFileManager {
     private _tmpDir;
-    private _freeTmpFileNums: Map<string, {total: number, nums: number[]}> = new Map();
+    private _freeTmpFileNums: Map<string, { total: number, nums: number[] }> = new Map();
 
     constructor() {
         this._tmpDir = getTmpDirSync();
@@ -266,17 +266,19 @@ class TmpFileManager {
         return path.join(this._tmpDir.name, ...elems);
     }
 
-    public isTmpPath(path: string): boolean {
-        return path.startsWith(this._tmpDir);
+    public isTmpPath(p: string): boolean {
+        return p.toLowerCase().startsWith(path.dirname(this._tmpDir.name).toLowerCase());
     }
-
+    public getTmpPath(): string {
+        return this._tmpDir.name;
+    }
     public cleanupTmpFiles() {
         this._tmpDir.removeCallback();
     }
 
     public getFreeTmpFileNum(key: string): number {
         if (!this._freeTmpFileNums.has(key)) {
-            this._freeTmpFileNums.set(key, {total: 0, nums: []});
+            this._freeTmpFileNums.set(key, { total: 0, nums: [] });
         }
         if (this._freeTmpFileNums.get(key).nums.length <= 0) {
             this._freeTmpFileNums.get(key).nums.push(this._freeTmpFileNums.get(key).total++);
