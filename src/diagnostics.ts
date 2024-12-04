@@ -178,7 +178,7 @@ function parseVerilatorDiagnostics(
                     lineNum, colNum, lineNum,
                     colNumEnd < colNum ? colNum : colNumEnd),
                 message: message,
-                code: 'verilator',
+                code: terms[2] != undefined ? `verilator${terms[2]}` : `verilator-`,
                 source: terms[3] // attach file path on source 
             });
             // }

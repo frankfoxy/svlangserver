@@ -41,8 +41,7 @@
         "svlangserver": "./bin/main.js"
     },
     "contributes": {
-        "languages": [
-            {
+        "languages": [{
                 "id": "systemverilog",
                 "aliases": [
                     "SystemVerilog",
@@ -69,8 +68,7 @@
                 "configuration": "./language-configuration.json"
             }
         ],
-        "snippets": [
-            {
+        "snippets": [{
                 "language": "systemverilog",
                 "path": "./snippets/systemverilog.json"
             },
@@ -79,8 +77,7 @@
                 "path": "./snippets/systemverilog.json"
             }
         ],
-        "grammars": [
-            {
+        "grammars": [{
                 "language": "systemverilog",
                 "scopeName": "source.systemverilog",
                 "path": "./syntaxes/systemverilog.tmLanguage.json"
@@ -102,121 +99,118 @@
                 }
             }
         ],
-        "configuration": [
-            {
-                "title": "SystemVerilog Language Server",
-                "properties": {
-                    "systemverilog.trace.server": {
-                        "scope": "window",
-                        "type": "string",
-                        "enum": [
-                            "off",
-                            "messages",
-                            "verbose"
-                        ],
-                        "default": "off",
-                        "description": "Traces the communication between VS Code and the language server."
-                    },
-                    "systemverilog.includeIndexing": {
-                        "type": "array",
-                        "default": [
-                            "**/*.sv"
-                        ],
-                        "description": "Files included for indexing (glob pattern)."
-                    },
-                    "systemverilog.mustIncludeIndexing": {
-                        "type": "array",
-                        "default": [],
-                        "description": "Files included for indexing and are always to be linted (glob pattern)."
-                    },
-                    "systemverilog.libraryIndexing": {
-                        "type": "array",
-                        "default": [],
-                        "description": "Files not included for indexing but needed for linting (glob pattern)."
-                    },
-                    "systemverilog.excludeIndexing": {
-                        "type": "array",
-                        "default": [
-                            "**/test/**"
-                        ],
-                        "description": "Files excluded for indexing (glob pattern)."
-                    },
-                    "systemverilog.linter": {
-                        "type": "string",
-                        "enum": [
-                            "icarus",
-                            "verilator"
-                        ],
-                        "default": "verilator",
-                        "description": "Linter to use"
-                    },
-                    "systemverilog.launchConfiguration": {
-                        "type": "string",
-                        "default": "verilator -sv --lint-only --Wall",
-                        "description": "Command used for linting",
-                        "examples": [
-                            "verilator -sv --lint-only --Wall",
-                            "iverilog -t null"
-                        ]
-                    },
-                    "systemverilog.defines": {
-                        "type": "array",
-                        "default": [],
-                        "description": "Defines needed for linting."
-                    },
-                    "systemverilog.lintOnUnsaved": {
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Enable linting on unsaved files"
-                    },
-                    "systemverilog.linterWhitelist": {
-                        "type": "array",
-                        "default": [
-                            "/Unsupported: Interfaced port on top level module/i",
-                            "/Parent instance's interface is not found/i"
-                        ],
-                        "description": "List of linting errors that need to be whitelisted (javascript regex)"
-                    },
-                    "systemverilog.formatCommand": {
-                        "type": "string",
-                        "default": "verible-verilog-format",
-                        "description": "Verible verilog format command"
-                    },
-                    "systemverilog.lintingVerilatorUseWSL": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "If enabled, run verilator in WSL."
-                    },
-                    "systemverilog.lintingVerilatorAutoScanDirLevel": {
-                        "type": "integer",
-                        "default": 3,
-                        "description": "Auto scan dir of current file with specified depth level to construct verilator's -y option."
-                    },
-                    "systemverilog.disableCompletionProvider": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Disable auto completion provided by the language server"
-                    },
-                    "systemverilog.disableHoverProvider": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Disable hover over help provided by the language server"
-                    },
-                    "systemverilog.disableSignatureHelpProvider": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Disable signature help provided by the language server"
-                    },
-                    "systemverilog.disableLinting": {
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Disable verilator linting"
-                    }
+        "configuration": [{
+            "title": "SystemVerilog Language Server",
+            "properties": {
+                "systemverilog.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server."
+                },
+                "systemverilog.includeIndexing": {
+                    "type": "array",
+                    "default": [
+                        "**/*.sv"
+                    ],
+                    "description": "Files included for indexing (glob pattern)."
+                },
+                "systemverilog.mustIncludeIndexing": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Files included for indexing and are always to be linted (glob pattern)."
+                },
+                "systemverilog.libraryIndexing": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Files not included for indexing but needed for linting (glob pattern)."
+                },
+                "systemverilog.excludeIndexing": {
+                    "type": "array",
+                    "default": [
+                        "**/test/**"
+                    ],
+                    "description": "Files excluded for indexing (glob pattern)."
+                },
+                "systemverilog.linter": {
+                    "type": "string",
+                    "enum": [
+                        "icarus",
+                        "verilator"
+                    ],
+                    "default": "verilator",
+                    "description": "Linter to use"
+                },
+                "systemverilog.launchConfiguration": {
+                    "type": "string",
+                    "default": "verilator -sv --lint-only --Wall",
+                    "description": "Command used for linting",
+                    "examples": [
+                        "verilator -sv --lint-only --Wall",
+                        "iverilog -t null"
+                    ]
+                },
+                "systemverilog.defines": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Defines needed for linting."
+                },
+                "systemverilog.lintOnUnsaved": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable linting on unsaved files"
+                },
+                "systemverilog.linterWhitelist": {
+                    "type": "array",
+                    "default": [
+                        "/Unsupported: Interfaced port on top level module/i",
+                        "/Parent instance's interface is not found/i"
+                    ],
+                    "description": "List of linting errors that need to be whitelisted (javascript regex)"
+                },
+                "systemverilog.formatCommand": {
+                    "type": "string",
+                    "default": "verible-verilog-format",
+                    "description": "Verible verilog format command"
+                },
+                "systemverilog.lintingVerilatorUseWSL": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If enabled, run verilator in WSL."
+                },
+                "systemverilog.lintingVerilatorAutoScanDirLevel": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Auto scan dir of current file with specified depth level to construct verilator's -y option."
+                },
+                "systemverilog.disableCompletionProvider": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable auto completion provided by the language server"
+                },
+                "systemverilog.disableHoverProvider": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable hover over help provided by the language server"
+                },
+                "systemverilog.disableSignatureHelpProvider": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable signature help provided by the language server"
+                },
+                "systemverilog.disableLinting": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Disable verilator linting"
                 }
             }
-        ],
-        "commands": [
-            {
+        }],
+        "commands": [{
                 "command": "systemverilog.build_index",
                 "title": "SystemVerilog: Build index of modules in workspace"
             },
@@ -225,29 +219,24 @@
                 "title": "SystemVerilog: Get hierarchy of instances for a given top module"
             }
         ],
-        "jsonValidation": [
-            {
-                "fileMatch": "tasks.json",
-                "url": "./schemas/tasks.schema.json"
-            }
-        ],
-        "problemMatchers": [
-            {
+        "jsonValidation": [{
+            "fileMatch": "tasks.json",
+            "url": "./schemas/tasks.schema.json"
+        }],
+        "problemMatchers": [{
                 "name": "verilator-error",
                 "owner": "Verilator",
                 "source": "systemverilog",
                 "severity": "error",
                 "fileLocation": "autoDetect",
-                "pattern": [
-                    {
-                        "regexp": "%Error(-[A-Z0-9]+)?: ((\\S+):(\\d+):((\\d+):)? )?(.*)$",
-                        "severity": 1,
-                        "file": 2,
-                        "line": 3,
-                        "column": 4,
-                        "message": 5
-                    }
-                ]
+                "pattern": [{
+                    "regexp": "%Error(-[A-Z0-9]+)?: ((\\S+):(\\d+):((\\d+):)? )?(.*)$",
+                    "severity": 1,
+                    "file": 2,
+                    "line": 3,
+                    "column": 4,
+                    "message": 5
+                }]
             },
             {
                 "name": "verilator-warning",
@@ -255,16 +244,14 @@
                 "source": "systemverilog",
                 "severity": "warning",
                 "fileLocation": "autoDetect",
-                "pattern": [
-                    {
-                        "regexp": "%Warning(-[A-Z0-9]+)?: ((\\S+):(\\d+):((\\d+):)? )?(.*)$",
-                        "severity": 1,
-                        "file": 2,
-                        "line": 3,
-                        "column": 4,
-                        "message": 5
-                    }
-                ]
+                "pattern": [{
+                    "regexp": "%Warning(-[A-Z0-9]+)?: ((\\S+):(\\d+):((\\d+):)? )?(.*)$",
+                    "severity": 1,
+                    "file": 2,
+                    "line": 3,
+                    "column": 4,
+                    "message": 5
+                }]
             }
         ]
     },

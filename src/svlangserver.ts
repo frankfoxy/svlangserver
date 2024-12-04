@@ -395,7 +395,7 @@ function lintDocument(uri: string, text?: string) {
             // send diagnostics for other files
             ss.forEach(s => {
                 let d = diagnostics.filter(item => item.source === s)
-                d.forEach(s => { s.source = "" + s.code; });
+                d.forEach(s => { ss = s.code.toString().split("-"); s.source = ss[0]; s.code = ss[1]; });
                 ConnectionLogger.log(` * diag item cnt: ${s} : ${d.length}`);
                 connection.sendDiagnostics({ uri: pathToUri(s), diagnostics: d });
             });
