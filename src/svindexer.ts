@@ -165,6 +165,8 @@ export class SystemVerilogIndexer {
     }
 
     index(includes: string[], mustIncludes: string[], excludes: string[]) {
+        ConnectionLogger.log(`>>>index start on "${this._rootPath}":  includes:${includes}, mustIncludes:${mustIncludes}, excludes: ${excludes} `)
+
         let _filesGlob = (callBack) => {
             let _incFiles: string[] = undefined;
             let _mustFiles: string[] = undefined;
@@ -181,7 +183,7 @@ export class SystemVerilogIndexer {
                 }
             });
 
-            this._indexGlob(mustIncludes, excludes, _incGlob.options, (err, files) => {
+            this._indexGlob(mustIncludes, [], undefined, (err, files) => {
                 if (err) {
                     callBack(err, [], []);
                     return;

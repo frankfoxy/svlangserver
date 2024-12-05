@@ -116,7 +116,9 @@
                 "systemverilog.includeIndexing": {
                     "type": "array",
                     "default": [
-                        "**/*.sv"
+                        "**/*.sv",
+                        "**/*.v",
+                        "**/*.vh"
                     ],
                     "description": "Files included for indexing (glob pattern)."
                 },
