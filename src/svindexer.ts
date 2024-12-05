@@ -488,7 +488,8 @@ export class SystemVerilogIndexer {
             }
             this._optionsFileContent.push('+incdir+' + incdir);
         }
-        fsWriteFile(this.getLinterOptionsFile(), this._optionsFileContent.join('\n'))
+
+        fsWriteFile(this.getLinterOptionsFile(), this._optionsFileContent.filter((item, i, ar) => ar.indexOf(item) === i).join('\n'))
             .catch(error => {
                 ConnectionLogger.error(error);
             });

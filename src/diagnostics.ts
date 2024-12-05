@@ -389,7 +389,6 @@ export class VerilogDiagnostics {
                                                     d.source = file
                                                 else
                                                     d.source = d.source.replace(/\/mnt\/([a-zA-Z]+)/, "\$1:").replace(/\//g, '\\');
-                                                // ConnectionLogger.log(`>>>>>>${useTempFile}, ${d.source}, ${tmpFileManager.isTmpPath(d.source)}, ${path.dirname(tmpFileManager.getTmpPath())}, ${path.dirname(tmpFileManager.getTmpPath()).indexOf(d.source)}`);
                                             });
                                             diagnostics = diagnostics.filter(d => !tmpFileManager.isTmpPath(d.source));
                                         }
