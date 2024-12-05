@@ -364,7 +364,7 @@ function lintDocument(uri: string, text?: string) {
                 let diags: Diagnostic[] = diagnostics.filter(item => item.source === lintFile)
 
                 let diagErrorRelated: DiagnosticRelatedInformation[] = [];
-                let errorDiags = diagnostics.filter(d => d.severity == DiagnosticSeverity.Error)
+                let errorDiags = diagnostics.filter(d => d.severity == DiagnosticSeverity.Error && d.source !== lintFile)
                 errorDiags.forEach(e => {
                     diagErrorRelated.push({
                         location: {
