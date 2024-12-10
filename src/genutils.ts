@@ -168,8 +168,14 @@ export class ConnectionLogger {
         ConnectionLogger.sendNotification(MessageType.Warning, `${prefix ? "WARNING: " : ""}${message}`);
     }
 
-    public static error(message: string, prefix: boolean = true) {
-        ConnectionLogger.sendNotification(MessageType.Error, `${prefix ? "ERROR: " : ""}${message}`);
+    public static error(message: any, prefix: boolean = true) {
+        let err_msg: string = "";
+        if (message instanceof Error) {
+            err_msg = `${message.message}\n${message.stack}`;
+        } else {
+            err_msg = message;
+        }  
+        ConnectionLogger.sendNotification(MessageType.Error, `${prefix ? "ERROR: " : ""}${err_msg}`);
     }
 }
 
