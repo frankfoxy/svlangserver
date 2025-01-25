@@ -118,7 +118,7 @@ function parseVerilatorDiagnostics(
         file = `/mnt/${file.replace(/:/, '')}`;
         // ConnectionLogger.log(`DEBUG: file ${file}`);
     }
-
+    //%Error: /mnt/f/EDA/Lattice/radiant/2024.1/ip/pmi/../common/fifo_dc/rtl/lscc_fifo_dc.v:8452:141: Cannot find file containing module: 'PDP16K'
     let regexCurFile: RegExp = new RegExp(
         String.raw`%(Error|Warning)(-[A-Z0-9_]+)?: (${file.replace(
             /[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')}):(\d+):(?:(\d+):)? (.*)`,
@@ -147,7 +147,6 @@ function parseVerilatorDiagnostics(
             message = terms[6];
 
             // if (/%Error/.test(line))
-            ConnectionLogger.log(`  >> ${line}`);
 
             let messageWhiteListed: Boolean = false;
             for (let whitelistedMessage of whitelistedMessages) {
@@ -169,6 +168,9 @@ function parseVerilatorDiagnostics(
                 colNumEnd =
                     colNumEnd > startColNum ? colNumEnd - startColNum : colNumEnd;
                 i += 2;
+            }
+            if (terms[1] == "Error") {
+                ConnectionLogger.log(`  >> ${line}`);
             }
 
             // if ((lineNum != NaN) && (colNum != NaN)) {
