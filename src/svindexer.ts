@@ -472,19 +472,22 @@ export class SystemVerilogIndexer {
         this._optionsFileContent = [];
         for (let [file, rank] of [...[...this._indexedFilesInfo.entries()].filter(a => a[1].pkgdeps != null)].sort((a, b) => a[1].rank <= b[1].rank ? 1 : -1)) {
             if (this._mustSrcFiles.has(file)) {
+                file = "/mnt/" + file.replace(/^([^:]+):/, '$1'.toLowerCase()).replace(/\\/g, "/");
                 this._optionsFileContent.push(file);
             }
             else {
-                this._optionsFileContent.push('-v ' + file);
+                file = "/mnt/" + file.replace(/^([^:]+):/, '$1'.toLowerCase()).replace(/\\/g, "/");
+                // this._optionsFileContent.push('-v ' + file);
             }
         }
         for (let libfile of [...new Set(this._libFiles.values())]) {
-            this._optionsFileContent.push('-v ' + libfile);
+            libfile = "/mnt/" + libfile.replace(/^([^:]+):/, '$1'.toLowerCase()).replace(/\\/g, "/");
+            // this._optionsFileContent.push('-v ' + libfile);
         }
         for (let incdir of [...new Set(this._srcFiles.map(file => path.dirname(file))), ...new Set(this._srcFiles.map(file => path.dirname(file)))]) {
             if (settings.get("systemverilog.lintingVerilatorUseWSL")) {
                 incdir = incdir.replace(/\\/g, "/");
-                incdir = "/mnt/" + incdir.replace(/^([^:]+):/, '$1'.toLowerCase());
+                incdir = "/mnt/" + incdir.replace(/^([^:]+):/, '$1'.toLowerCase()).replace(/\\/g, "/");
             }
             this._optionsFileContent.push('+incdir+' + incdir);
         }
